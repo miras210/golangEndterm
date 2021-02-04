@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"gitlab.com/tleuzhan13/grpc-go-course/greet/greetpb"
-	"google.golang.org/grpc"
 	"io"
 	"log"
+
+	"gitlab.com/tleuzhan13/grpc-go-course/greet/greetpb"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -62,5 +63,9 @@ LOOP:
 		}
 		log.Printf("response from GreetManyTimes:%v \n", res.GetResult())
 	}
+
+}
+
+func doLongGreet(c greetpb.GreetServiceClient) {
 
 }

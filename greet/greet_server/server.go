@@ -3,17 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	"gitlab.com/tleuzhan13/grpc-go-course/greet/greetpb"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"time"
+
+	"gitlab.com/tleuzhan13/grpc-go-course/greet/greetpb"
+	"google.golang.org/grpc"
 )
 
+//Server with embedded UnimplementedGreetServiceServer
 type Server struct {
 	greetpb.UnimplementedGreetServiceServer
 }
 
+//Greet is an example of unary rpc call
 func (s *Server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.GreetResponse, error) {
 	fmt.Printf("Greet function was invoked with %v \n", req)
 	firstName := req.GetGreeting().GetFirstName()
@@ -26,6 +29,7 @@ func (s *Server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb
 	return res, nil
 }
 
+// GreetManyTimes is an example of stream from server side
 func (s *Server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb.GreetService_GreetManyTimesServer) error {
 	fmt.Printf("GreetManyTimes function was invoked with %v \n", req)
 	firstName := req.GetGreeting().GetFirstName()
@@ -38,6 +42,10 @@ func (s *Server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greet
 		time.Sleep(time.Second)
 	}
 	return nil
+}
+
+func (s *Server) LongGreet(stream greetpb.) error {
+
 }
 
 func main() {
