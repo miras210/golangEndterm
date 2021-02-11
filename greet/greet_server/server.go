@@ -22,7 +22,8 @@ func (s *Server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb
 	fmt.Printf("Greet function was invoked with %v \n", req)
 	firstName := req.GetGreeting().GetFirstName()
 
-	result := "Hello " + firstName
+	result := "Hello, " + firstName
+
 	res := &greetpb.GreetResponse{
 		Result: result,
 	}
@@ -34,7 +35,6 @@ func (s *Server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb
 func (s *Server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb.GreetService_GreetManyTimesServer) error {
 	fmt.Printf("GreetManyTimes function was invoked with %v \n", req)
 	firstName := req.GetGreeting().GetFirstName()
-
 	for i := 0; i < 10; i++ {
 		res := &greetpb.GreetManyTimesResponse{Result: fmt.Sprintf("%d) Hello, %v\n", i, firstName)}
 		if err := stream.Send(res); err != nil {
@@ -44,25 +44,49 @@ func (s *Server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greet
 	}
 	return nil
 }
+
 //LongGreet is an example of stream from client side
 func (s *Server) LongGreet(stream greetpb.GreetService_LongGreetServer) error {
 	fmt.Printf("LongGreet function was invoked with a streaming request\n")
 	var result string
-	
+
 	for {
 		req, err := stream.Recv()
-			if err == io.EOF {
-				// we have finished reading the client stream
-				return stream.SendAndClose(&greetpb.LongGreetResponse{
-					Result: result,
-				})
-				
-			}
-			if err != nil {
-				log.Fatalf("Error while reading client stream: %v", err)
-			}
-		firstName:= req.Greeting.GetFirstName()
+		if err == io.EOF {
+			// we have finished reading the client stream
+			return stream.SendAndClose(&greetpb.LongGreetResponse{
+				Result: result,
+			})
+
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+		}
+		firstName := req.Greeting.GetFirstName()
 		result += "Hello " + firstName + "! \n"
+	}
+}
+
+//GreetEveryone is an example of bidirectional stream
+func (s *Server) GreetEveryone(stream greetpb.GreetService_GreetEveryoneServer) error {
+	fmt.Printf("GreetEveryone function was invoked with a streaming request\n")
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("error while reading client stream: %v", err.Error())
+			return err
+		}
+		firstName := req.GetGreeting().GetFirstName()
+		result := "Hello, " + firstName
+		err = stream.Send(&greetpb.GreetEveryoneResponse{Result: result})
+		if err != nil {
+			log.Fatalf("error while sending to client: %v", err.Error())
+			return err
+		}
 	}
 }
 
@@ -71,7 +95,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen:%v", err)
 	}
-
 	s := grpc.NewServer()
 	greetpb.RegisterGreetServiceServer(s, &Server{})
 	log.Println("Server is running on port:50051")
