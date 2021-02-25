@@ -7,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	//	"time"
+
 	"com.grpc.tleu/greet/greetpb"
 	"google.golang.org/grpc"
 )
@@ -20,33 +22,18 @@ func main() {
 	}
 	defer conn.Close()
 
-	c := greetpb.NewGreetServiceClient(conn)
-	doGreetingEveryone(c)
+	c := greetpb.NewCalculatorServiceClient(conn)
+	//doManyTimesFromServer(c)
+	doAverage(c)
 }
 
-func doUnary(c greetpb.GreetServiceClient) {
+
+
+func doManyTimesFromServer(c greetpb.CalculatorServiceClient) {
 	ctx := context.Background()
+	req := &greetpb.PrimeRequest{Number: 120}
 
-	request := &greetpb.GreetRequest{Greeting: &greetpb.Greeting{
-		FirstName: "Ilon",
-		LastName:  "Musk",
-	}}
-
-	response, err := c.Greet(ctx, request)
-	if err != nil {
-		log.Fatalf("error while calling Greet RPC %v", err)
-	}
-	log.Printf("response from Greet:%v", response.Result)
-}
-
-func doManyTimesFromServer(c greetpb.GreetServiceClient) {
-	ctx := context.Background()
-	req := &greetpb.GreetManyTimesRequest{Greeting: &greetpb.Greeting{
-		FirstName: "Bob",
-		LastName:  "123",
-	}}
-
-	stream, err := c.GreetManyTimes(ctx, req)
+	stream, err := c.PrimeNumberDecomposition(ctx, req)
 	if err != nil {
 		log.Fatalf("error while calling GreetManyTimes RPC %v", err)
 	}
@@ -62,33 +49,30 @@ LOOP:
 			}
 			log.Fatalf("error while reciving from GreetManyTimes RPC %v", err)
 		}
-		log.Printf("response from GreetManyTimes:%v \n", res.GetResult())
+		log.Printf("response from PrimeNumberDecomposition: %v \n", res.GetNumber())
 	}
 
 }
 
-func doLongGreet(c greetpb.GreetServiceClient) {
+func doAverage(c greetpb.CalculatorServiceClient) {
 
-	requests := []*greetpb.LongGreetRequest{
+	requests := []*greetpb.AverageRequest{
 		{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Tleu",
-			},
+			Number: 1,
 		},
 		{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Bob",
-			},
+			Number: 2,
 		},
 		{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Alice",
-			},
+			Number: 3,
+		},
+		{
+			Number: 4,
 		},
 	}
 
 	ctx := context.Background()
-	stream, err := c.LongGreet(ctx)
+	stream, err := c.ComputeAverage(ctx)
 	if err != nil {
 		log.Fatalf("error while calling LongGreet: %v", err)
 	}
@@ -103,64 +87,5 @@ func doLongGreet(c greetpb.GreetServiceClient) {
 	if err != nil {
 		log.Fatalf("error while receiving response from LongGreet: %v", err)
 	}
-	fmt.Printf("LongGreet Response: %v\n", res)
-}
-
-func doGreetingEveryone(c greetpb.GreetServiceClient) {
-
-	stream, err := c.GreetEveryone(context.Background())
-	if err != nil {
-		log.Fatalf("error while open stream: %v", err)
-	}
-
-	requests := []*greetpb.GreetEveryoneRequest{
-		{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Tleu",
-			},
-		},
-		{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Bob",
-			},
-		},
-		{
-			Greeting: &greetpb.Greeting{
-				FirstName: "Alice",
-			},
-		},
-	}
-
-	waitc := make(chan struct{})
-
-	go func() {
-		for _, req := range requests {
-			log.Printf("Sending message: %v", req)
-			err := stream.Send(req)
-			if err != nil {
-				log.Fatalf("error while sending req to server: %v", err.Error())
-			}
-			time.Sleep(time.Second)
-		}
-		err := stream.CloseSend()
-		if err != nil {
-			log.Fatalf("errow while closing client's stream")
-		}
-	}()
-
-	go func() {
-		for {
-			res, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatalf("error while getting message from stream: %v", err.Error())
-			}
-			log.Printf("Received: %v", res.GetResult())
-		}
-		close(waitc)
-	}()
-
-	<-waitc
+	fmt.Printf("ComputeAverage Response: %v\n", res.GetNumber())
 }
