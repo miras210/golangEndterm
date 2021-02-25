@@ -21,7 +21,7 @@ func (s *Server) PrimeNumberDecomposition(req *greetpb.PrimeRequest, stream gree
 	num := req.GetNumber()
 	var count int32 = 2
 	for num != 1 {
-		if num%count == 0 {
+		if num % count == 0 {
 			res := &greetpb.PrimeResponse{Number: count}
 			if err := stream.Send(res); err != nil {
 				log.Fatalf("error while sending greet many times responses: %v", err.Error())
@@ -44,7 +44,7 @@ func (s *Server) ComputeAverage(stream greetpb.CalculatorService_ComputeAverageS
 		if err == io.EOF {
 			// we have finished reading the client stream
 			return stream.SendAndClose(&greetpb.AverageResponse{
-				Number: result / count,
+				Number: result/count,
 			})
 
 		}

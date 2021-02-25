@@ -1,11 +1,11 @@
 FROM golang
-COPY ./ /app
-WORKDIR /app
+COPY ./ /end
+WORKDIR /end
 RUN CGO_ENABLED=0 GOOS=linux go build -o client greet/greet_client/*.go
-ENTRYPOINT /app/client
-# Build final image
+ENTRYPOINT /end/client
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /app/
-COPY --from=0 /app/client .
+WORKDIR /end/
+COPY --from=0 /end/client .
 ENTRYPOINT ["./client"]
+EXPOSE "50051"
