@@ -9,3 +9,4 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app/
 COPY --from=0 /app/server .
 ENTRYPOINT ["./server"]
+EXPOSE "50051"
